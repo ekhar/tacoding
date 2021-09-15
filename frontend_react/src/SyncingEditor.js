@@ -24,7 +24,6 @@ export const SyncingEditor = () => {
         let editor_id = x.editor_id;
         let ops = x.ops;
 
-        console.log("running");
         if (id.current !== editor_id) {
           remote.current = true;
           JSON.parse(ops).forEach((op) => {
@@ -42,8 +41,12 @@ export const SyncingEditor = () => {
       editor={editor}
       value={value}
       onChange={(newValue) => {
+        //changes value of editor
         setValue(newValue);
-
+        //saves file locally
+        const content = JSON.stringify(newValue);
+        localStorage.setItem("content", content);
+        //go through the ops to make sure they are changes to the text
         const ops = editor.operations
           .filter((o) => {
             if (o) {
