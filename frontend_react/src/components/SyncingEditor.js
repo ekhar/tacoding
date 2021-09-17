@@ -2,11 +2,10 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 // Import the Slate editor factory.
 import { createEditor } from "slate";
-
+import { Node } from "slate";
 // Import the Slate components and React plugin.
 import { Slate, Editable, withReact } from "slate-react";
 import { initialvalue } from "./slateinitialvalue";
-
 var socket = new WebSocket("ws://localhost:8000/ws");
 
 export const SyncingEditor = () => {
@@ -21,15 +20,18 @@ export const SyncingEditor = () => {
       "message",
       (data) => {
         var x = JSON.parse(JSON.parse(data.data).body);
-        let editor_id = x.editor_id;
-        let ops = x.ops;
+        let action = x.action;
+        if (action === "typing") {
+          let editor_id = x.editor_id;
+          let ops = x.ops;
 
-        if (id.current !== editor_id) {
-          remote.current = true;
-          JSON.parse(ops).forEach((op) => {
-            editor.apply(op);
-          });
-          remote.current = false;
+          if (id.current !== editor_id) {
+            remote.current = true;
+            JSON.parse(ops).forEach((op) => {
+              editor.apply(op);
+            });
+            remote.current = false;
+          }
         }
       },
       { once: true }
@@ -44,8 +46,12 @@ export const SyncingEditor = () => {
         //changes value of editor
         setValue(newValue);
         //saves file locally
+        const serialize = (nodes) => {
+          return nodes.map((n) => Node.string(n)).join("\n");
+        };
         const content = JSON.stringify(newValue);
         localStorage.setItem("content", content);
+        localStorage.setItem("plaintext", serialize(newValue));
         //go through the ops to make sure they are changes to the text
         const ops = editor.operations
           .filter((o) => {
@@ -62,6 +68,7 @@ export const SyncingEditor = () => {
         if (ops.length && !remote.current) {
           socket.send(
             JSON.stringify({
+              action: "typing",
               editor_id: id.current,
               ops: JSON.stringify(ops),
             })
