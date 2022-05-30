@@ -2,6 +2,9 @@ package websocket
 
 import "fmt"
 
+//Pools have channels for registering and unregistering clients
+//Pools have boolean value for if a client exists
+//Pools have channel for broadcasting a message
 type Pool struct {
 	Register   chan *Client
 	Unregister chan *Client
@@ -9,6 +12,7 @@ type Pool struct {
 	Broadcast  chan Message
 }
 
+//create a pool struct and return pointer to the pool
 func NewPool() *Pool {
 	return &Pool{
 		Register:   make(chan *Client),
@@ -18,27 +22,40 @@ func NewPool() *Pool {
 	}
 }
 
+//Pool begins
 func (pool *Pool) Start() {
+    //infinite loop
 	for {
+        //handle client channel cases
 		select {
+        //if a new client registers
 		case client := <-pool.Register:
 			pool.Clients[client] = true
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 			for client := range pool.Clients {
 				fmt.Println(client)
 			}
+        //if client exits
 		case client := <-pool.Unregister:
 			delete(pool.Clients, client)
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
+
+        //If we get a message, lets broadcast it
 		case message := <-pool.Broadcast:
 			fmt.Println("Sending message to all clients in Pool")
+            //for all clients in pool
 			for client := range pool.Clients {
-                if err := client.Conn.WriteJSON(message); err != nil {
-                    fmt.Println(err)
-                    return
-				}
+                //if client is not the sender of the message
+                if client.ID != message.ID{
+                    //send them the message
+                    if err := client.Conn.WriteJSON(message); err != nil {
+                        fmt.Println(err)
+                        return
+                    }
+
+                }
 			}
-		
-		}	
+
+		}
 	}
 }
