@@ -13,18 +13,19 @@ export const SyncingEditor = () => {
   const editor = useMemo(() => withReact(createEditor()), []);
   // Add the initial value when setting up our state.
   const [value, setValue] = useState(initialvalue);
-  const id = useRef(String(Date.now()));
+  const editor_id = useRef(String(Date.now()));
   const remote = useRef(false);
 
   useEffect(() => {
+        console.log("I am running")
     socket.addEventListener(
       "message",
-      (data) => {
-        var x = JSON.parse(JSON.parse(data.data).body);
-        let editor_id = x.editor_id;
-        let ops = x.ops;
-
-        if (id.current !== editor_id) {
+      (msg) => {
+        let tmp = JSON.parse(msg.data)
+        console.log("MSG DATA",msg.data)
+        let id = tmp.id;
+        let ops = tmp.ops;
+        if (id !== editor_id.current) {
           remote.current = true;
           JSON.parse(ops).forEach((op) => {
             editor.apply(op);
@@ -32,9 +33,8 @@ export const SyncingEditor = () => {
           remote.current = false;
         }
       },
-      { once: true }
     );
-  });
+    }, []);
 
   return (
     <Slate
@@ -44,8 +44,8 @@ export const SyncingEditor = () => {
         //changes value of editor
         setValue(newValue);
         //saves file locally
-        const content = JSON.stringify(newValue);
-        localStorage.setItem("content", content);
+            //const content = JSON.stringify(newValue);
+            //localStorage.setItem("content", content);
         //go through the ops to make sure they are changes to the text
         const ops = editor.operations
           .filter((o) => {
@@ -59,10 +59,12 @@ export const SyncingEditor = () => {
             return false;
           })
           .map((o) => ({ ...o, data: { source: "one" } }));
+        //if operations have been made send a message to server
         if (ops.length && !remote.current) {
+        //console.log(JSON.stringify(ops))
           socket.send(
             JSON.stringify({
-              editor_id: id.current,
+              id: editor_id.current,
               ops: JSON.stringify(ops),
             })
           );
