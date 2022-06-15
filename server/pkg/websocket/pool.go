@@ -5,20 +5,23 @@ import "fmt"
 //Pools have channels for registering and unregistering clients
 //Pools have boolean value for if a client exists
 //Pools have channel for broadcasting a message
+//Lastly pools have ID's
 type Pool struct {
 	Register   chan *Client
 	Unregister chan *Client
 	Clients    map[*Client]bool
 	Broadcast  chan []byte
+    ID         string
 }
 
 //create a pool struct and return pointer to the pool
-func NewPool() *Pool {
+func NewPool(id string) *Pool {
 	return &Pool{
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
 		Broadcast:  make(chan []byte),
+        ID: id,
 	}
 }
 

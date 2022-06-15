@@ -7,7 +7,12 @@ import { createEditor } from "slate";
 import { Slate, Editable, withReact } from "slate-react";
 import { initialvalue } from "./slateinitialvalue";
 
-var socket = new WebSocket("ws://localhost:8000/ws");
+let url = window.location.href
+url = url.split("/")
+url = url[url.length-1]
+url = "ws://localhost:8000/ws/" + url
+console.log("THIS IS THE URL", url)
+var socket = new WebSocket(url);
 
 export const SyncingEditor = () => {
   const editor = useMemo(() => withReact(createEditor()), []);
