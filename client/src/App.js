@@ -1,9 +1,11 @@
 // Import React dependencies.
-import { SyncingEditor } from "./SyncingEditor";
+import { SyncingEditor } from "./components/SyncingEditor";
+import { RunButton } from "./components/RunButton";
 
 const App = () => {
   return (
     <div>
+        <RunButton/>
       <SyncingEditor />
     </div>
   );
